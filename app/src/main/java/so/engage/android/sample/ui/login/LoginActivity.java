@@ -132,21 +132,20 @@ public class LoginActivity extends AppCompatActivity {
         String welcome = getString(R.string.welcome) + model.getDisplayName();
         // TODO : initiate successful logged in experience
         HashMap<String, Object> attributes = new HashMap<String, Object>();
-//        attributes.put("first_name", model.getDisplayName());
-//        attributes.put("age", 14);
-//        attributes.put("created_at", new Date());
-//        Engage.identify(model.getDisplayId(), attributes);
+        attributes.put("first_name", model.getDisplayName());
+        attributes.put("age", 14);
+        attributes.put("created_at", "2021-01-01");
+        Engage.identify(model.getDisplayId(), attributes);
         // Engage.trackEvents(model.getDisplayId(), "Login");
         // Engage.trackEvents(model.getDisplayId(), "Clicked", "Login button");
-//        attributes.remove("first_name");
-//        attributes.remove("age");
-//        attributes.remove("created_at");
-        attributes.put("type", "button");
-        attributes.put("counter", 1);
-        attributes.put("web", true);
-        attributes.put("date", new Date());
-        Date date = new Date();
-        Engage.trackEvents(model.getDisplayId(), "Clicked", attributes, date);
+        // attributes.remove("first_name");
+        // attributes.remove("age");
+        // attributes.remove("created_at");
+        // attributes.put("type", "button");
+        // attributes.put("counter", 1);
+        // attributes.put("web", true);
+        // attributes.put("date", new Date());
+        // Engage.trackEvents(model.getDisplayId(), "Clicked", attributes, date);
 
         Toast.makeText(getApplicationContext(), welcome, Toast.LENGTH_LONG).show();
     }

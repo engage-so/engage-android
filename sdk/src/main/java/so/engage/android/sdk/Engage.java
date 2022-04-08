@@ -2,12 +2,7 @@ package so.engage.android.sdk;
 
 import android.util.Log;
 
-//import androidx.annotation.NonNull;
-
 import com.google.gson.Gson;
-
-//import org.json.JSONException;
-//import org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.DateFormat;
