@@ -45,7 +45,7 @@ Ensure your app includes INTERNET permission as it is needed to sync data.
 
 ## Initialization
 
-Import `so.engage.android.sdk.Engage;` and initialize the SDK.
+Import `so.engage.android.sdk.Engage` and initialize the SDK.
 
 ```java
 // ...
@@ -66,6 +66,7 @@ Engage uses your user's unique identifier (this is mostly the ID field of the us
 ```java
 private void updateUiWithUser(LoggedInUserView model) {
   // ...
+  // model.getDisplayId() is the user's unique id
   HashMap<String, Object> attributes = new HashMap<String, Object>();
   attributes.put("first_name", model.getDisplayName());
   attributes.put("last_login", new Date());
@@ -78,10 +79,10 @@ When new users are identified, Engage assumes their signup date to be the curren
 
 ```java
 HashMap<String, Object> attributes = new HashMap<String, Object>();
-attributes.put("first_name", model.getDisplayName());
+attributes.put("first_name", "Adeyinka");
 attributes.put("last_login", new Date());
 attributes.put("created_at", "2021-01-04");
-Engage.identify(model.getDisplayId(), attributes);
+Engage.identify(userId, attributes);
 ```
 
 ## Add attributes
@@ -92,7 +93,7 @@ To add more attributes to the user's profile, use the `addAttributes` method.
 HashMap<String, Object> attributes = new HashMap<String, Object>();
 attributes.put("plan", "Pro");
 attributes.put("age", 14);
-Engage.addAttributes(model.getDisplayId(), attributes);
+Engage.addAttributes(userId, attributes);
 ```
 
 ## Track events
@@ -100,13 +101,13 @@ Engage.addAttributes(model.getDisplayId(), attributes);
 Track an event:
 
 ```java
-Engage.trackEvents(model.getDisplayId(), "Login");
+Engage.trackEvents(userId, "Login");
 ```
 
 Track an event with a value:
 
 ```java
-Engage.trackEvents(model.getDisplayId(), "Clicked", "Login button");
+Engage.trackEvents(userId, "Clicked", "Login button");
 ```
 
 Track an event with properties:
@@ -115,12 +116,12 @@ Track an event with properties:
 HashMap<String, Object> properties = new HashMap<String, Object>();
 properties.put("type", "button");
 properties.put("counter", counter);
-Engage.trackEvents(model.getDisplayId(), "Clicked", properties);
+Engage.trackEvents(userId, "Clicked", properties);
 ```
 
 Engage sets the event date to the current timestamp but if you would like to set a different date, you can add a date as the last argument of the `trackEvents` method.
 
 ```java
 Date lastWk = new Date(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000);
-Engage.trackEvents(model.getDisplayId(), "Clicked", "Login button", lastWk);
+Engage.trackEvents(userId, "Clicked", "Login button", lastWk);
 ```
