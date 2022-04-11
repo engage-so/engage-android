@@ -96,6 +96,18 @@ attributes.put("age", 14);
 Engage.addAttributes(userId, attributes);
 ```
 
+## Set device token
+
+Engage integrates with [FCM](https://firebase.google.com/docs/cloud-messaging) to let you send push notifications to your users, either through broadcast or automation. However, to do this, you need to send the user's FCM registration token to Engage. The device registration token is a unique identifier that allows the device receive messages. 
+
+```java
+@Override
+public void onTokenRefresh() {
+  String token = FirebaseInstanceId.getInstance().getToken();
+  Engage.setDeviceToken(userId, token)
+}
+```
+
 ## Track events
 
 Track an event:
