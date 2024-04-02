@@ -1,0 +1,153 @@
+package so.engage.android.sdk.engage
+
+import android.app.Activity
+import so.engage.android.sdk.network.Endpoint
+import so.engage.android.sdk.network.Network
+import so.engage.android.sdk.util.Preference
+import so.engage.android.sdk.util.build
+import so.engage.android.sdk.util.toJson
+import so.engage.android.sdk.util.version
+import java.util.Date
+import java.util.UUID
+
+
+@Suppress("NAME_SHADOWING")
+class Engage: EngageInterface {
+    companion object {
+        private var _instance: Engage? = null
+
+        val instance: Engage
+            get() {
+                return  _instance ?: Engage().also { _instance = it }
+            }
+    }
+
+    private lateinit var preference: Preference
+    private lateinit var network: Network
+
+    private var version: String = ""
+    private var build: String = ""
+
+
+    private fun userId(uid: String?): String {
+        val id = uid ?: preference.getString("uid")
+        if (id == null)  {
+            val anonymous = UUID.randomUUID().toString()
+            preference.putString(mapOf("uid" to  anonymous))
+            return anonymous
+        }
+        return id
+    }
+
+    override fun initialise(activity: Activity, publicKey: String): Engage {
+        preference = Preference(activity)
+        network = Network(preference)
+        version = activity.version
+        build = activity.build
+        preference.putString(mapOf("publicKey" to  publicKey))
+
+        return instance
+    }
+
+    override fun identify(uid: String, properties: Map<String, Any>) {
+        preference.putString(mapOf("uid" to  uid))
+
+        val data: HashMap<String, Any> = HashMap()
+        val meta: HashMap<String, Any> = HashMap()
+        val standardAttributes = listOf("is_account", "first_name", "last_name", "email", "number", "created_at", "tz")
+
+        for (key in properties.keys) {
+            if (standardAttributes.contains(key)) {
+                data[key] = properties[key] as Any
+            } else {
+                meta[key] = properties[key] as Any
+            }
+        }
+        data["meta"] = meta
+
+        network.put(Endpoint.identify(uid), data.toJson)
+    }
+
+    override fun setDeviceToken(deviceToken: String, uid: String?) {
+        val uid = userId(uid)
+        val data: HashMap<String, Any> = HashMap()
+        data["device_token"] = deviceToken
+        data["device_platform"] = "Android"
+        data["app_version"] = version
+        data["app_build"] = build
+
+        network.put(Endpoint.setDeviceToken(uid), data.toJson)
+    }
+
+    override fun logout(deviceToken: String, uid: String?) {
+        val uid = userId(uid)
+        network.delete(Endpoint.logout(uid, deviceToken))
+    }
+
+    override fun addToAccount(aid: String, role: String?, uid: String?) {
+        val uid = userId(uid)
+        val account: HashMap<String, Any> = HashMap()
+        if (role != null) {
+            account["role"] = role
+        }
+        val accounts = listOf(account)
+
+        val data: HashMap<String, Any> = HashMap()
+        data["accounts"] = accounts
+        network.post(Endpoint.addToAccount(uid), data.toJson)
+    }
+
+    override fun addAttributes(properties: Map<String, Any>, uid: String?) {
+        val uid = userId(uid)
+        identify(uid, properties)
+    }
+
+    override fun removeFromAccount(aid: String, uid: String?) {
+        val uid = userId(uid)
+        network.delete(Endpoint.removeFromAccount(uid, aid))
+    }
+
+    override fun changeAccountRole(aid: String, role: String, uid: String?) {
+        val uid = userId(uid)
+        val data: HashMap<String, Any> = HashMap()
+        data["role"] = role
+
+        network.put(Endpoint.changeAccountRole(uid, aid), data.toJson)
+    }
+
+    override fun convertToCustomer(uid: String?) {
+        val uid = userId(uid)
+        val data: HashMap<String, Any> = HashMap()
+        data["type"] = "customer"
+
+        network.post(Endpoint.convertToCustomer(uid), data.toJson)
+    }
+
+    override fun convertToAccount(uid: String?) {
+        val uid = userId(uid)
+        val data: HashMap<String, Any> = HashMap()
+        data["type"] = "account"
+
+        network.post(Endpoint.convertToAccount(uid), data.toJson)
+    }
+
+    override fun merge(source: String, destination: String) {
+        val data: HashMap<String, Any> = HashMap()
+        data["source"] = source
+        data["destination"] = destination
+
+        network.post(Endpoint.merge, data.toJson)
+    }
+
+    override fun track(event: String, properties: Map<String, Any>?, uid: String?) {
+        val uid = userId(uid)
+        val data: HashMap<String, Any> = HashMap()
+        data["event"] = event
+        if (properties != null) {
+            data["properties"] = properties
+        }
+        data["timestamp"] = Date().toString()
+
+        network.post(Endpoint.track(uid), data.toJson)
+    }
+}
