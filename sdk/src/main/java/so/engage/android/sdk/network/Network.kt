@@ -28,14 +28,11 @@ class Network(private val preference: Preference) : NetworkInterface {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                println("====== ERROR =======")
-                println(e.toString())
+                println("ENGAGE: $e")
             }
 
             override fun onResponse(call: Call, response: Response) {
-                println("====== RESPONSE =======")
-                println(response.message)
-                println(response.code)
+                println("ENGAGE: ${response.code}")
             }
         })
     }
