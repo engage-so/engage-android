@@ -47,7 +47,7 @@ class Network(private val preference: Preference) : NetworkInterface {
 
     override fun put(url: URL, body: String) {
         try {
-            request(Builder().url(url).put(body.toRequestBody()))
+            request(Builder().url(url).put(body.toRequestBody(contentType)))
         } catch (e: Exception) {
             println(e.toString())
         }
