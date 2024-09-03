@@ -72,7 +72,7 @@ class Engage: EngageInterface {
         val uid = userId(uid)
         val data: HashMap<String, Any> = HashMap()
         data["device_token"] = deviceToken
-        data["device_platform"] = "Android"
+        data["device_platform"] = "android"
         data["app_version"] = version
         data["app_build"] = build
 
