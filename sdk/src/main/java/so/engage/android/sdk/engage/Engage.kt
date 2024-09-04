@@ -69,24 +69,29 @@ class Engage: EngageInterface {
     }
 
     override fun setDeviceToken(deviceToken: String, uid: String?) {
+        preference.putString(mapOf("deviceToken" to  deviceToken))
+
         val uid = userId(uid)
         val data: HashMap<String, Any> = HashMap()
         data["device_token"] = deviceToken
         data["device_platform"] = "android"
         data["app_version"] = version
         data["app_build"] = build
+        data["app_last_active"] = Date()
 
         network.put(Endpoint.setDeviceToken(uid), data.toJson)
     }
 
-    override fun logout(deviceToken: String, uid: String?) {
+    override fun logout(deviceToken: String?, uid: String?) {
         val uid = userId(uid)
-        network.delete(Endpoint.logout(uid, deviceToken))
+        val token = deviceToken ?: preference.getString("deviceToken") ?: ""
+        network.delete(Endpoint.logout(uid, token))
     }
 
     override fun addToAccount(aid: String, role: String?, uid: String?) {
         val uid = userId(uid)
         val account: HashMap<String, Any> = HashMap()
+        account["id"] = aid
         if (role != null) {
             account["role"] = role
         }
@@ -139,14 +144,20 @@ class Engage: EngageInterface {
         network.post(Endpoint.merge, data.toJson)
     }
 
-    override fun track(event: String, properties: Map<String, Any>?, uid: String?) {
+    override fun track(event: String, value: Any?, date: Date?, uid: String?) {
         val uid = userId(uid)
         val data: HashMap<String, Any> = HashMap()
         data["event"] = event
-        if (properties != null) {
-            data["properties"] = properties
+        if (value is Date && date == null) {
+            data["timestamp"] = value
+        } else if (value is Map<*, *>) {
+            data["properties"] = value
+        } else if (value != null) {
+            data["value"] = value
         }
-        data["timestamp"] = Date().toString()
+        if (date != null) {
+            data["timestamp"] = date
+        }
 
         network.post(Endpoint.track(uid), data.toJson)
     }
