@@ -1,6 +1,5 @@
 package so.engage.android.sdk.engage
 
-import android.app.Activity
 import android.content.Context
 import java.util.Date
 
