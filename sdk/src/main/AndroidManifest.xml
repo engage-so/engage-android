@@ -1,4 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        <!-- Transparent activity for push interactions
+
+        Notes:
+        * Using launchMode="singleTask" because Android OS does not launch activity again in one session, if the activity
+        was launched recently from earlier notification.
+        * launchMode="singleTop" does not work well with ACTIVITY_NO_FLAGS if customer app also has launchMode="singleTop"
+        (e.g. Flutter apps) and have multiple instances launched from notifications in one session.
+
+        -->
+        <activity
+            android:name=".notification.NotificationActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <service
+            android:name=".notification.NotificationService"
+            android:exported="false">
+            <intent-filter android:priority="-1">
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+    </application>
+
 </manifest>

@@ -1,10 +1,11 @@
 package so.engage.android.sdk.engage
 
 import android.app.Activity
+import android.content.Context
 import java.util.Date
 
 interface EngageInterface {
-    fun initialise(activity: Activity, publicKey: String): Engage
+    fun initialise(context: Context, publicKey: String): Engage
     fun identify(uid: String, properties: Map<String, Any>)
     fun setDeviceToken(deviceToken: String, uid: String? = null)
     fun logout(deviceToken: String? = null, uid: String? = null)

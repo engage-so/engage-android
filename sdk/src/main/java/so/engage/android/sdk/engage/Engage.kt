@@ -1,6 +1,6 @@
 package so.engage.android.sdk.engage
 
-import android.app.Activity
+import android.content.Context
 import so.engage.android.sdk.network.Endpoint
 import so.engage.android.sdk.network.Network
 import so.engage.android.sdk.util.Preference
@@ -12,7 +12,7 @@ import java.util.UUID
 
 
 @Suppress("NAME_SHADOWING")
-class Engage: EngageInterface {
+class Engage private constructor() : EngageInterface {
     companion object {
         private var _instance: Engage? = null
 
@@ -39,11 +39,11 @@ class Engage: EngageInterface {
         return id
     }
 
-    override fun initialise(activity: Activity, publicKey: String): Engage {
-        preference = Preference(activity)
+    override fun initialise(context: Context, publicKey: String): Engage {
+        preference = Preference(context)
         network = Network(preference)
-        version = activity.version
-        build = activity.build
+        version = context.version
+        build = context.build
         preference.putString(mapOf("publicKey" to  publicKey))
 
         return instance
