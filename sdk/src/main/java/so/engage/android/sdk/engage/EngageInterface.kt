@@ -16,4 +16,6 @@ interface EngageInterface {
     fun convertToAccount(uid: String? = null)
     fun merge(source: String, destination: String)
     fun track(event: String, value: Any? = null, date: Date? = null, uid: String? = null)
+    fun onMessageOpened(handler:  (Map<String, Any>) -> Unit)
+    fun onMessageReceived(handler:  (Map<String, Any>) -> Unit)
 }

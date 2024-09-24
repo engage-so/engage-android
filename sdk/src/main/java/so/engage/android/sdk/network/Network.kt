@@ -32,7 +32,12 @@ class Network(private val preference: Preference) : NetworkInterface {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                println("ENGAGE: ${response.code}")
+                response.use {  // Automatically closes the response body
+                    println("ENGAGE: ${response.code}")
+                    // You can handle the response here, e.g., read the response body
+                    val responseBody = response.body?.string()
+                    println("ENGAGE: Response body: $responseBody")
+                }
             }
         })
     }

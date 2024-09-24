@@ -17,6 +17,7 @@ import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import so.engage.android.sdk.engage.Engage
 import so.engage.android.sdk.handler.NotificationHandler
 import so.engage.android.sdk.util.Constants
 import so.engage.android.sdk.util.getColorOrNull
@@ -27,23 +28,24 @@ import so.engage.android.sdk.util.toColorOrNull
 import java.net.URL
 import kotlin.math.abs
 
-open class NotificationService : FirebaseMessagingService() {
-    companion object {
-        const val IMAGE_KEY = "image"
-        const val TITLE_KEY = "title"
-        const val BODY_KEY = "body"
-
-        const val NOTIFICATION_REQUEST_CODE = "requestCode"
-        private const val FCM_METADATA_DEFAULT_NOTIFICATION_ICON =
-            "com.google.firebase.messaging.default_notification_icon"
-        private const val FCM_METADATA_DEFAULT_NOTIFICATION_COLOR =
-            "com.google.firebase.messaging.default_notification_color"
-    }
-
+class NotificationService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
+        println("NOTIFICATION DATA ${remoteMessage.data}")
+        val bundle: Bundle by lazy {
+            Bundle().apply {
+                remoteMessage.data.forEach { entry ->
+                    putString(entry.key, entry.value)
+                    println("ENGAGE MESSAGE PAYLOAD KEY: ${entry.key} VALUE: ${entry.value}")
+                }
+            }
+        }
+
+        val messageId = bundle.getString(Constants.MESSAGEID) ?: return
+        // Handle received message if messageId is available
+        NotificationHandler.instance.trackMessageDelivered(this, messageId)
         // Handle received message
-        trackNotificationReceived(remoteMessage)
+        showNotification(bundle, remoteMessage)
     }
 
 
@@ -51,28 +53,15 @@ open class NotificationService : FirebaseMessagingService() {
         super.onNewToken(token)
         // Handle the updated token
         println("Token Renewed $token")
+        Engage.instance.setDeviceToken(token)
     }
 
-
-    private fun trackNotificationReceived(remoteMessage: RemoteMessage) {
-        val bundle: Bundle by lazy {
-            Bundle().apply {
-                remoteMessage.data.forEach { entry ->
-                    putString(entry.key, entry.value)
-                }
-            }
-        }
-
-        val messageId = bundle.getString(Constants.MESSAGEID) ?: return
-
-        NotificationHandler.instance.trackMessageDelivered(this, messageId)
-
-        // Check if message contains a notification payload.
+    private fun showNotification(bundle: Bundle, remoteMessage: RemoteMessage) {
+        val messageId = bundle.getString(Constants.MESSAGEID)
         val applicationName = this.applicationInfo.loadLabel(this.packageManager).toString()
-
         val requestCode = abs(System.currentTimeMillis().toInt())
 
-        bundle.putInt(NOTIFICATION_REQUEST_CODE, requestCode)
+        bundle.putInt(Constants.NOTIFICATION_REQUEST_CODE, requestCode)
 
         val applicationInfo = try {
             this.packageManager.getApplicationInfo(
@@ -88,20 +77,19 @@ open class NotificationService : FirebaseMessagingService() {
         @DrawableRes
         val smallIcon: Int =
             remoteMessage.notification?.icon?.let { iconName -> this.getDrawableByName(iconName) }
-                ?: appMetaData?.getMetaDataResource(name = FCM_METADATA_DEFAULT_NOTIFICATION_ICON)
+                ?: appMetaData?.getMetaDataResource(name = Constants.FCM_METADATA_DEFAULT_NOTIFICATION_ICON)
                 ?: this.applicationInfo.icon
 
         @ColorInt
         val tintColor: Int? =
             remoteMessage.notification?.color?.toColorOrNull()
-                ?: appMetaData?.getMetaDataResource(name = FCM_METADATA_DEFAULT_NOTIFICATION_COLOR)
+                ?: appMetaData?.getMetaDataResource(name = Constants.FCM_METADATA_DEFAULT_NOTIFICATION_COLOR)
                     ?.let { id -> this.getColorOrNull(id) }
-                ?: appMetaData?.getMetaDataString(name = FCM_METADATA_DEFAULT_NOTIFICATION_COLOR)
+                ?: appMetaData?.getMetaDataString(name = Constants.FCM_METADATA_DEFAULT_NOTIFICATION_COLOR)
                     ?.toColorOrNull()
-
         // set title and body
-        val title = bundle.getString(TITLE_KEY) ?: remoteMessage.notification?.title ?: ""
-        val body = bundle.getString(BODY_KEY) ?: remoteMessage.notification?.body ?: ""
+        val title = bundle.getString(Constants.TITLE_KEY) ?: remoteMessage.notification?.title ?: ""
+        val body = bundle.getString(Constants.BODY_KEY) ?: remoteMessage.notification?.body ?: ""
 
         val channelId = this.packageName
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -114,12 +102,11 @@ open class NotificationService : FirebaseMessagingService() {
             .setTicker(applicationName)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
         tintColor?.let { color -> notificationBuilder.setColor(color) }
-
         try {
             // check for image in data and notification payload to cater for both simple and rich push
             // data only payload (foreground and background)
             // notification + data payload (foreground)
-            val notificationImage = bundle.getString(IMAGE_KEY) ?: remoteMessage.notification?.imageUrl?.toString()
+            val notificationImage = bundle.getString(Constants.IMAGE_KEY) ?: remoteMessage.notification?.imageUrl?.toString()
             if (notificationImage != null) {
                 addImage(notificationImage, notificationBuilder, body)
             }
@@ -136,11 +123,10 @@ open class NotificationService : FirebaseMessagingService() {
             val channel = NotificationChannel(
                 channelId,
                 channelName,
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             )
             notificationManager.createNotificationChannel(channel)
         }
-
         // set pending intent
         val notifyIntent = Intent(this, NotificationActivity::class.java)
         notifyIntent.putExtra(Constants.MESSAGEID, messageId)
@@ -153,7 +139,6 @@ open class NotificationService : FirebaseMessagingService() {
         notificationBuilder.setContentIntent(
             PendingIntent.getActivity(this, requestCode, notifyIntent, flags)
         )
-
         val notification = notificationBuilder.build()
         notificationManager.notify(requestCode, notification)
     }

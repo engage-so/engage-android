@@ -1,6 +1,7 @@
 package so.engage.android.sdk.engage
 
 import android.content.Context
+import so.engage.android.sdk.handler.NotificationHandler
 import so.engage.android.sdk.network.Endpoint
 import so.engage.android.sdk.network.Network
 import so.engage.android.sdk.util.Preference
@@ -160,5 +161,13 @@ class Engage private constructor() : EngageInterface {
         }
 
         network.post(Endpoint.track(uid), data.toJson)
+    }
+
+    override fun onMessageOpened(handler: (Map<String, Any>) -> Unit) {
+        NotificationHandler.instance.setOnMessageOpened(handler)
+    }
+
+    override fun onMessageReceived(handler: (Map<String, Any>) -> Unit) {
+        NotificationHandler.instance.setOnMessageReceived(handler)
     }
 }
