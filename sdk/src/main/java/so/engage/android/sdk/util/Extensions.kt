@@ -10,11 +10,22 @@ import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
+import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
 
-val Map<String, Any>.toJson: String
+val Any.toJson: String
     get() {
        return Gson().toJson(this)
+    }
+
+
+val String.toRemoteMessage: RemoteMessage?
+    get() {
+        return try {
+            Gson().fromJson(this, RemoteMessage::class.java)
+        } catch (exc: Exception) {
+            null
+        }
     }
 
 val Context.version: String

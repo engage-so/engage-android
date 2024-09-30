@@ -9,6 +9,7 @@ import okhttp3.Request
 import okhttp3.Request.Builder
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import so.engage.android.sdk.util.Constants
 import so.engage.android.sdk.util.Preference
 import java.io.IOException
 import java.net.URL
@@ -19,7 +20,7 @@ class Network(private val preference: Preference) : NetworkInterface {
 
     private fun request(builder: Builder) {
         val client = OkHttpClient()
-        val publicKey = preference.getString("publicKey") ?: ""
+        val publicKey = preference.getString(Constants.PUBLIC_KEY) ?: ""
         val credential: String = Credentials.basic(publicKey, "")
         val request: Request = builder
             .header("Authorization", credential)

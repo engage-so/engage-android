@@ -1,9 +1,11 @@
 package so.engage.android.sdk.engage
 
 import android.content.Context
+import com.google.firebase.messaging.RemoteMessage
 import so.engage.android.sdk.handler.NotificationHandler
 import so.engage.android.sdk.network.Endpoint
 import so.engage.android.sdk.network.Network
+import so.engage.android.sdk.util.Constants
 import so.engage.android.sdk.util.Preference
 import so.engage.android.sdk.util.build
 import so.engage.android.sdk.util.toJson
@@ -31,10 +33,10 @@ class Engage private constructor() : EngageInterface {
 
 
     private fun userId(uid: String?): String {
-        val id = uid ?: preference.getString("uid")
+        val id = uid ?: preference.getString(Constants.UID)
         if (id == null)  {
             val anonymous = UUID.randomUUID().toString()
-            preference.putString(mapOf("uid" to  anonymous))
+            preference.putString(mapOf(Constants.UID to  anonymous))
             return anonymous
         }
         return id
@@ -45,13 +47,18 @@ class Engage private constructor() : EngageInterface {
         network = Network(preference)
         version = context.version
         build = context.build
-        preference.putString(mapOf("publicKey" to  publicKey))
+        preference.putString(mapOf(Constants.PUBLIC_KEY to  publicKey))
 
         return instance
     }
 
     override fun identify(uid: String, properties: Map<String, Any>) {
-        preference.putString(mapOf("uid" to  uid))
+        val id = preference.getString(Constants.UID)
+        if (id != null && id != uid)  {
+            merge(id, uid)
+        }
+
+        preference.putString(mapOf(Constants.UID to  uid))
 
         val data: HashMap<String, Any> = HashMap()
         val meta: HashMap<String, Any> = HashMap()
@@ -67,10 +74,14 @@ class Engage private constructor() : EngageInterface {
         data["meta"] = meta
 
         network.put(Endpoint.identify(uid), data.toJson)
+        val hasUsageActivity = preference.getBoolean(Constants.HAS_USAGE_ACTIVITY)
+        if (!hasUsageActivity) {
+            preference.putBoolean(mapOf(Constants.HAS_USAGE_ACTIVITY to  true))
+        }
     }
 
     override fun setDeviceToken(deviceToken: String, uid: String?) {
-        preference.putString(mapOf("deviceToken" to  deviceToken))
+        preference.putString(mapOf(Constants.DEVICE_TOKEN to  deviceToken))
 
         val uid = userId(uid)
         val data: HashMap<String, Any> = HashMap()
@@ -81,11 +92,15 @@ class Engage private constructor() : EngageInterface {
         data["app_last_active"] = Date()
 
         network.put(Endpoint.setDeviceToken(uid), data.toJson)
+        val hasUsageActivity = preference.getBoolean(Constants.HAS_USAGE_ACTIVITY)
+        if (!hasUsageActivity) {
+            preference.putBoolean(mapOf(Constants.HAS_USAGE_ACTIVITY to  true))
+        }
     }
 
     override fun logout(deviceToken: String?, uid: String?) {
         val uid = userId(uid)
-        val token = deviceToken ?: preference.getString("deviceToken") ?: ""
+        val token = deviceToken ?: preference.getString(Constants.DEVICE_TOKEN) ?: ""
         network.delete(Endpoint.logout(uid, token))
     }
 
@@ -161,13 +176,21 @@ class Engage private constructor() : EngageInterface {
         }
 
         network.post(Endpoint.track(uid), data.toJson)
+        val hasUsageActivity = preference.getBoolean(Constants.HAS_USAGE_ACTIVITY)
+        if (!hasUsageActivity) {
+            preference.putBoolean(mapOf(Constants.HAS_USAGE_ACTIVITY to  true))
+        }
     }
 
-    override fun onMessageOpened(handler: (Map<String, Any>) -> Unit) {
+    override fun onMessageOpened(handler: (RemoteMessage) -> Unit) {
         NotificationHandler.instance.setOnMessageOpened(handler)
     }
 
-    override fun onMessageReceived(handler: (Map<String, Any>) -> Unit) {
+    override fun onMessageReceived(handler: (RemoteMessage) -> Unit) {
         NotificationHandler.instance.setOnMessageReceived(handler)
+    }
+
+    override fun handleMessageReceived(context: Context, remoteMessage: RemoteMessage): Boolean {
+        return NotificationHandler.instance.trackMessageDelivered(context, remoteMessage)
     }
 }

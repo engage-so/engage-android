@@ -30,15 +30,14 @@ class MainActivity : ComponentActivity() {
             "first_name" to "Ifeanyi",
             "last_name" to "Onuoha",
             "email" to "ifeonu@gmail.com",
-            "number" to "+2348060943333",
         )
         Engage.instance.identify("beifbeiue", properties)
         Engage.instance.track("app_open")
         Engage.instance.onMessageOpened { message ->
-            println("FIREBASE MESSAGE OPENED ON APP $message")
+            println("FIREBASE MESSAGE OPENED ON APP ${message.data}")
         }
         Engage.instance.onMessageReceived { message ->
-            println("FIREBASE MESSAGE RECEIVED ON APP $message")
+            println("FIREBASE MESSAGE RECEIVED ON APP ${message.data}")
         }
 
 
