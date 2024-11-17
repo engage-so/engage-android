@@ -4,7 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import so.engage.android.sdk.handler.NotificationHandler
-import so.engage.android.sdk.util.Constants
+import so.engage.android.sdk.utils.Constants
 
 /**
  * Activity to handle notification click events.
@@ -29,10 +29,10 @@ class NotificationActivity : Activity() {
             // Ignore event if no data was received in extras
             if (extras == null || extras.isEmpty) return
             // Not an Engage push notification if messageId is null
-            val messageId = extras.getString(Constants.MESSAGEID) ?: return
+            val message = extras.getString(Constants.ENGAGE_INTENT_EXTRA) ?: return
 
             println("Tracking Click Activity")
-            NotificationHandler.instance.trackMessageOpened(this, messageId)
+            NotificationHandler.instance.trackMessageOpened(this, message)
         }.onFailure { ex ->
             println("Failed to process notification intent: ${ex.message}")
         }

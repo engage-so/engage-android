@@ -1,4 +1,4 @@
-package so.engage.android.sdk.util
+package so.engage.android.sdk.utils
 
 import android.content.Context
 

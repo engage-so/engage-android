@@ -4,8 +4,8 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import so.engage.android.sdk.engage.Engage
 import so.engage.android.sdk.handler.NotificationHandler
-import so.engage.android.sdk.util.Constants
-import so.engage.android.sdk.util.Preference
+import so.engage.android.sdk.utils.Constants
+import so.engage.android.sdk.utils.Preference
 
 class NotificationService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {

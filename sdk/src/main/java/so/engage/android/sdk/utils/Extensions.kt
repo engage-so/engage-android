@@ -1,4 +1,4 @@
-package so.engage.android.sdk.util
+package so.engage.android.sdk.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -9,6 +9,7 @@ import android.os.Bundle
 import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
+import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
@@ -87,4 +88,24 @@ internal fun Bundle.getMetaDataResource(name: String): Int? {
 
 internal fun Bundle.getMetaDataString(name: String): String? {
     return getString(name, null).takeUnless { value -> value.isNullOrBlank() }
+}
+
+internal fun ComposeColor.Companion.fromHex(hex: String): ComposeColor {
+    val hexSanitized = hex.removePrefix("#")
+    val colorInt = hexSanitized.toLong(16)
+    return when (hexSanitized.length) {
+        6 -> ComposeColor(
+            red = ((colorInt shr 16) and 0xFF) / 255f,
+            green = ((colorInt shr 8) and 0xFF) / 255f,
+            blue = (colorInt and 0xFF) / 255f,
+            alpha = 1f
+        )
+        8 -> ComposeColor(
+            red = ((colorInt shr 24) and 0xFF) / 255f,
+            green = ((colorInt shr 16) and 0xFF) / 255f,
+            blue = ((colorInt shr 8) and 0xFF) / 255f,
+            alpha = (colorInt and 0xFF) / 255f
+        )
+        else -> Unspecified
+    }
 }

@@ -1,7 +1,8 @@
-package so.engage.android.sdk.util
+package so.engage.android.sdk.utils
 
 object Constants {
     const val MESSAGEID = "engage_msg_id"
+    const val ENGAGE_INTENT_EXTRA = "engageIntentExtra"
     const val UID = "uid"
     const val PUBLIC_KEY = "publicKey"
     const val DEVICE_TOKEN = "deviceToken"

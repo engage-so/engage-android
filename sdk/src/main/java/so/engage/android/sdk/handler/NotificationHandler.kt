@@ -20,15 +20,15 @@ import kotlinx.coroutines.withContext
 import so.engage.android.sdk.network.Endpoint
 import so.engage.android.sdk.network.Network
 import so.engage.android.sdk.notification.NotificationActivity
-import so.engage.android.sdk.util.Constants
-import so.engage.android.sdk.util.Preference
-import so.engage.android.sdk.util.getColorOrNull
-import so.engage.android.sdk.util.getDrawableByName
-import so.engage.android.sdk.util.getMetaDataResource
-import so.engage.android.sdk.util.getMetaDataString
-import so.engage.android.sdk.util.toColorOrNull
-import so.engage.android.sdk.util.toJson
-import so.engage.android.sdk.util.toRemoteMessage
+import so.engage.android.sdk.utils.Constants
+import so.engage.android.sdk.utils.Preference
+import so.engage.android.sdk.utils.getColorOrNull
+import so.engage.android.sdk.utils.getDrawableByName
+import so.engage.android.sdk.utils.getMetaDataResource
+import so.engage.android.sdk.utils.getMetaDataString
+import so.engage.android.sdk.utils.toColorOrNull
+import so.engage.android.sdk.utils.toJson
+import so.engage.android.sdk.utils.toRemoteMessage
 import java.net.URL
 import kotlin.math.abs
 
@@ -47,17 +47,18 @@ class NotificationHandler private constructor(): NotificationHandlerInterface {
         private var onMessageReceived: MessageHandler? = null
     }
 
-    override fun trackMessageOpened(context: Context, id: String) {
+    override fun trackMessageOpened(context: Context, message: String) {
         val preference = Preference(context)
         val network = Network(preference)
 
         val data: HashMap<String, Any> = HashMap()
         data["event"] = "opened"
 
+        val remoteMessage = message.toRemoteMessage ?: return
+        val messageId = remoteMessage.data[Constants.MESSAGEID] ?: return
 
-        network.post(Endpoint.trackNotification(id), data.toJson)
+        network.post(Endpoint.trackNotification(messageId), data.toJson)
 
-        val remoteMessage = preference.getString(id)?.toRemoteMessage ?: return
         onMessageOpened?.invoke(remoteMessage)
 
         // Launch the host app
@@ -70,8 +71,6 @@ class NotificationHandler private constructor(): NotificationHandlerInterface {
         val network = Network(preference)
 
         val messageId = remoteMessage.data[Constants.MESSAGEID] ?: return false
-
-        preference.putString(mapOf(messageId to remoteMessage.toJson))
 
         val data: HashMap<String, Any> = HashMap()
         data["event"] = "delivered"
@@ -91,8 +90,6 @@ class NotificationHandler private constructor(): NotificationHandlerInterface {
     }
 
     private fun showNotification(context: Context, remoteMessage: RemoteMessage) : Boolean {
-        val messageId = remoteMessage.data[Constants.MESSAGEID] ?: return false
-
         val applicationName = context.applicationInfo.loadLabel(context.packageManager).toString()
         val requestCode = abs(System.currentTimeMillis().toInt())
 
@@ -162,7 +159,7 @@ class NotificationHandler private constructor(): NotificationHandlerInterface {
         }
         // set pending intent
         val notifyIntent = Intent(context, NotificationActivity::class.java)
-        notifyIntent.putExtra(Constants.MESSAGEID, messageId)
+        notifyIntent.putExtra(Constants.ENGAGE_INTENT_EXTRA, remoteMessage.toJson)
         // In Android M, you must specify the mutability of each PendingIntent
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

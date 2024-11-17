@@ -20,4 +20,5 @@ interface EngageInterface {
     fun onMessageOpened(handler:  (RemoteMessage) -> Unit)
     fun onMessageReceived(handler:  (RemoteMessage) -> Unit)
     fun handleMessageReceived(context: Context, remoteMessage: RemoteMessage) : Boolean
+    fun showDialog(context: Context, isCarousel: Boolean)
 }

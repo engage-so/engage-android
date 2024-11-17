@@ -2,14 +2,15 @@ package so.engage.android.sdk.engage
 
 import android.content.Context
 import com.google.firebase.messaging.RemoteMessage
+import so.engage.android.sdk.handler.DialogHandler
 import so.engage.android.sdk.handler.NotificationHandler
 import so.engage.android.sdk.network.Endpoint
 import so.engage.android.sdk.network.Network
-import so.engage.android.sdk.util.Constants
-import so.engage.android.sdk.util.Preference
-import so.engage.android.sdk.util.build
-import so.engage.android.sdk.util.toJson
-import so.engage.android.sdk.util.version
+import so.engage.android.sdk.utils.Constants
+import so.engage.android.sdk.utils.Preference
+import so.engage.android.sdk.utils.build
+import so.engage.android.sdk.utils.toJson
+import so.engage.android.sdk.utils.version
 import java.util.Date
 import java.util.UUID
 
@@ -192,5 +193,9 @@ class Engage private constructor() : EngageInterface {
 
     override fun handleMessageReceived(context: Context, remoteMessage: RemoteMessage): Boolean {
         return NotificationHandler.instance.trackMessageDelivered(context, remoteMessage)
+    }
+
+    override fun showDialog(context: Context, isCarousel: Boolean) {
+        DialogHandler.instance.showDialog(context, isCarousel)
     }
 }
