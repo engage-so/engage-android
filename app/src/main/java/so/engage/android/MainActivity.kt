@@ -9,7 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
@@ -21,8 +20,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.google.firebase.Firebase
-import com.google.firebase.messaging.messaging
 import so.engage.android.sdk.engage.Engage
 import so.engage.android.ui.theme.EngageandroidTheme
 
@@ -32,7 +29,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 //        Firebase.messaging.isAutoInitEnabled = true
 //
-//        Engage.instance.initialise(this, "pk_bcbdcceecc80b6b83d7d8df664a98761")
+//        Engage.instance.init(this, "pk_bcbdcceecc80b6b83d7d8df664a98761")
 //        val properties = mapOf(
 //            "first_name" to "Ifeanyi",
 //            "last_name" to "Onuoha",

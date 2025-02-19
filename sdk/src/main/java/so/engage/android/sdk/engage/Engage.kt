@@ -43,7 +43,7 @@ class Engage private constructor() : EngageInterface {
         return id
     }
 
-    override fun initialise(context: Context, publicKey: String): Engage {
+    override fun init(context: Context, publicKey: String): Engage {
         preference = Preference(context)
         network = Network(preference)
         version = context.version

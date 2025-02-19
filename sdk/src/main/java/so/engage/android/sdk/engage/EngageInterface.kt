@@ -5,7 +5,7 @@ import com.google.firebase.messaging.RemoteMessage
 import java.util.Date
 
 interface EngageInterface {
-    fun initialise(context: Context, publicKey: String): Engage
+    fun init(context: Context, publicKey: String): Engage
     fun identify(uid: String, properties: Map<String, Any>)
     fun setDeviceToken(deviceToken: String, uid: String? = null)
     fun logout(deviceToken: String? = null, uid: String? = null)
