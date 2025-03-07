@@ -20,6 +20,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.Firebase
+import com.google.firebase.messaging.messaging
 import so.engage.android.sdk.engage.Engage
 import so.engage.android.ui.theme.EngageandroidTheme
 
@@ -27,22 +29,24 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        Firebase.messaging.isAutoInitEnabled = true
-//
-//        Engage.instance.init(this, "pk_bcbdcceecc80b6b83d7d8df664a98761")
-//        val properties = mapOf(
-//            "first_name" to "Ifeanyi",
-//            "last_name" to "Onuoha",
-//            "email" to "ifeonu@gmail.com",
-//        )
-//        Engage.instance.identify("beifbeiue", properties)
+        Firebase.messaging.isAutoInitEnabled = true
+        Firebase.messaging.token.addOnCompleteListener {
+            println(it.result)
+        }
+        Engage.instance.init(this, "pk_bcbdcceecc80b6b83d7d8df664a98761")
+        val properties = mapOf(
+            "first_name" to "Ifeanyi",
+            "last_name" to "Onuoha",
+            "email" to "ifeonu@gmail.com",
+        )
+        Engage.instance.identify("beifbeiue", properties)
 //        Engage.instance.track("app_open")
-//        Engage.instance.onMessageOpened { message ->
-//            println("FIREBASE MESSAGE OPENED ON APP ${message.data}")
-//        }
-//        Engage.instance.onMessageReceived { message ->
-//            println("FIREBASE MESSAGE RECEIVED ON APP ${message.data}")
-//        }
+        Engage.instance.onMessageOpened { message ->
+            println("FIREBASE MESSAGE OPENED ON APP ${message.data}")
+        }
+        Engage.instance.onMessageReceived { message ->
+            println("FIREBASE MESSAGE RECEIVED ON APP ${message.data}")
+        }
 
 
         setContent {

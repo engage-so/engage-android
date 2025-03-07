@@ -1,7 +1,9 @@
 package so.engage.android.sdk.engage
 
 import android.content.Context
+import com.google.firebase.Firebase
 import com.google.firebase.messaging.RemoteMessage
+import com.google.firebase.messaging.messaging
 import so.engage.android.sdk.handler.DialogHandler
 import so.engage.android.sdk.handler.NotificationHandler
 import so.engage.android.sdk.network.Endpoint
@@ -78,6 +80,10 @@ class Engage private constructor() : EngageInterface {
         val hasUsageActivity = preference.getBoolean(Constants.HAS_USAGE_ACTIVITY)
         if (!hasUsageActivity) {
             preference.putBoolean(mapOf(Constants.HAS_USAGE_ACTIVITY to  true))
+        }
+
+        Firebase.messaging.token.addOnCompleteListener {
+            setDeviceToken(it.result)
         }
     }
 

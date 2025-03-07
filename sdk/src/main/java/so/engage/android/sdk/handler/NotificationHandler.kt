@@ -125,7 +125,7 @@ class NotificationHandler private constructor(): NotificationHandlerInterface {
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(smallIcon)
-            .setContentTitle("$title form custom")
+            .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)
             .setSound(defaultSoundUri)
