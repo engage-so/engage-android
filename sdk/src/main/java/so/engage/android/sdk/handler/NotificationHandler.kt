@@ -47,23 +47,42 @@ class NotificationHandler private constructor(): NotificationHandlerInterface {
         private var onMessageReceived: MessageHandler? = null
     }
 
-    override fun trackMessageOpened(context: Context, message: String) {
+    private val channelId = "engage_so_default_channel"
+
+    override fun createNotificationChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Engage.so default channel",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    override fun trackMessageOpened(context: Context, message: String?, messageId: String?) {
         val preference = Preference(context)
         val network = Network(preference)
 
         val data: HashMap<String, Any> = HashMap()
         data["event"] = "opened"
 
-        val remoteMessage = message.toRemoteMessage ?: return
-        val messageId = remoteMessage.data[Constants.MESSAGEID] ?: return
+        val remoteMessage = message?.toRemoteMessage
+        val id = messageId ?: remoteMessage?.data?.get(Constants.MESSAGEID)
 
-        network.post(Endpoint.trackNotification(messageId), data.toJson)
-
-        onMessageOpened?.invoke(remoteMessage)
+        if (id != null) {
+            network.post(Endpoint.trackNotification(id), data.toJson)
+        }
 
         // Launch the host app
         val defaultHostAppIntent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
         context.startActivity(defaultHostAppIntent)
+
+        if (remoteMessage != null) {
+            onMessageOpened?.invoke(remoteMessage)
+        }
     }
 
     override fun trackMessageDelivered(context: Context, remoteMessage: RemoteMessage) : Boolean {
@@ -121,7 +140,6 @@ class NotificationHandler private constructor(): NotificationHandlerInterface {
         val title = remoteMessage.data[Constants.TITLE_KEY] ?: remoteMessage.notification?.title ?: ""
         val body = remoteMessage.data[Constants.BODY_KEY] ?: remoteMessage.notification?.body ?: ""
 
-        val channelId = context.packageName
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(smallIcon)
@@ -146,17 +164,9 @@ class NotificationHandler private constructor(): NotificationHandlerInterface {
 
         val notificationManager = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        val channelName = "$applicationName Notifications"
-
         // Since android Oreo notification channel is needed.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                channelName,
-                NotificationManager.IMPORTANCE_HIGH
-            )
-            notificationManager.createNotificationChannel(channel)
-        }
+        createNotificationChannel(context)
+
         // set pending intent
         val notifyIntent = Intent(context, NotificationActivity::class.java)
         notifyIntent.putExtra(Constants.ENGAGE_INTENT_EXTRA, remoteMessage.toJson)

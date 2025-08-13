@@ -1,6 +1,7 @@
 package so.engage.android
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -43,9 +44,11 @@ class MainActivity : ComponentActivity() {
 //        Engage.instance.track("app_open")
         Engage.instance.onMessageOpened { message ->
             println("FIREBASE MESSAGE OPENED ON APP ${message.data}")
+            Engage.instance.track("message_opened")
         }
         Engage.instance.onMessageReceived { message ->
             println("FIREBASE MESSAGE RECEIVED ON APP ${message.data}")
+            Engage.instance.track("message_received")
         }
 
 

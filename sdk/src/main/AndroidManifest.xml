@@ -3,7 +3,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <application>
+    <application android:name=".MyApplication">
         <!-- Transparent activity for push interactions
 
         Notes:
@@ -20,15 +20,26 @@
             android:launchMode="singleTask"
             android:noHistory="true"
             android:taskAffinity=""
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="ENGAGE_NOTIFICATION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
+        <!-- Register FirebaseMessagingService -->
         <service
             android:name=".notification.NotificationService"
             android:exported="false">
-            <intent-filter android:priority="-1">
+            <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <!-- Firebase default notification channel -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="engage_so_default_channel" />
     </application>
 
 </manifest>

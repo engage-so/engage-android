@@ -6,10 +6,16 @@ import so.engage.android.sdk.engage.Engage
 import so.engage.android.sdk.handler.NotificationHandler
 import so.engage.android.sdk.utils.Constants
 import so.engage.android.sdk.utils.Preference
+import so.engage.android.sdk.utils.toJson
 
 class NotificationService : FirebaseMessagingService() {
+    override fun onCreate() {
+        super.onCreate()
+        NotificationHandler.instance.createNotificationChannel(this)
+    }
+
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        println("NOTIFICATION DATA ${remoteMessage.data}")
+        println("NOTIFICATION ${remoteMessage.toJson}")
         // Handle received message if messageId is available
         NotificationHandler.instance.trackMessageDelivered(
             context = this,
@@ -20,7 +26,6 @@ class NotificationService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         // Handle the updated token
-        println("Token Renewed $token")
         val hasUsageActivity = Preference(this).getBoolean(Constants.HAS_USAGE_ACTIVITY)
         if (hasUsageActivity) {
             Engage.instance.setDeviceToken(token)

@@ -29,10 +29,17 @@ class NotificationActivity : Activity() {
             // Ignore event if no data was received in extras
             if (extras == null || extras.isEmpty) return
             // Not an Engage push notification if messageId is null
-            val message = extras.getString(Constants.ENGAGE_INTENT_EXTRA) ?: return
+            val message = extras.getString(Constants.ENGAGE_INTENT_EXTRA)
+            val messageId = extras.getString(Constants.MESSAGEID)
+
+            if (message == null && messageId == null) return
 
             println("Tracking Click Activity")
-            NotificationHandler.instance.trackMessageOpened(this, message)
+            NotificationHandler.instance.trackMessageOpened(
+                context = this,
+                message = message,
+                messageId = messageId
+            )
         }.onFailure { ex ->
             println("Failed to process notification intent: ${ex.message}")
         }
