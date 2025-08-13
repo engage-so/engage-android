@@ -9,7 +9,8 @@ import okhttp3.Request
 import okhttp3.Request.Builder
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import so.engage.android.sdk.util.Preference
+import so.engage.android.sdk.utils.Constants
+import so.engage.android.sdk.utils.Preference
 import java.io.IOException
 import java.net.URL
 
@@ -19,7 +20,7 @@ class Network(private val preference: Preference) : NetworkInterface {
 
     private fun request(builder: Builder) {
         val client = OkHttpClient()
-        val publicKey = preference.getString("publicKey") ?: ""
+        val publicKey = preference.getString(Constants.PUBLIC_KEY) ?: ""
         val credential: String = Credentials.basic(publicKey, "")
         val request: Request = builder
             .header("Authorization", credential)
@@ -32,7 +33,12 @@ class Network(private val preference: Preference) : NetworkInterface {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                println("ENGAGE: ${response.code}")
+                response.use {  // Automatically closes the response body
+                    println("ENGAGE: ${response.code}")
+                    // You can handle the response here, e.g., read the response body
+                    val responseBody = response.body?.string()
+                    println("ENGAGE: Response body: $responseBody")
+                }
             }
         })
     }

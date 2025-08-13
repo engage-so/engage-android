@@ -1,10 +1,11 @@
 package so.engage.android.sdk.engage
 
-import android.app.Activity
+import android.content.Context
+import com.google.firebase.messaging.RemoteMessage
 import java.util.Date
 
 interface EngageInterface {
-    fun initialise(activity: Activity, publicKey: String): Engage
+    fun init(context: Context, publicKey: String): Engage
     fun identify(uid: String, properties: Map<String, Any>)
     fun setDeviceToken(deviceToken: String, uid: String? = null)
     fun logout(deviceToken: String? = null, uid: String? = null)
@@ -16,4 +17,8 @@ interface EngageInterface {
     fun convertToAccount(uid: String? = null)
     fun merge(source: String, destination: String)
     fun track(event: String, value: Any? = null, date: Date? = null, uid: String? = null)
+    fun onMessageOpened(handler:  (RemoteMessage) -> Unit)
+    fun onMessageReceived(handler:  (RemoteMessage) -> Unit)
+    fun handleMessageReceived(context: Context, remoteMessage: RemoteMessage) : Boolean
+    fun showDialog(context: Context, isCarousel: Boolean)
 }
