@@ -6,7 +6,11 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import com.google.gson.Gson
 import so.engage.android.sdk.models.InAppPayload
+import so.engage.android.sdk.models.UserModel
+import so.engage.android.sdk.network.SocketService
+import so.engage.android.sdk.utils.Preference
 import so.engage.android.sdk.views.CarouselDialog
+import so.engage.android.sdk.views.ChatView
 import so.engage.android.sdk.views.SimpleDialog
 
 class DialogHandler private constructor() : DialogHandlerInterface {
@@ -19,6 +23,51 @@ class DialogHandler private constructor() : DialogHandlerInterface {
             }
     }
 
+    override fun openChat(context: Context, uid: String) {
+        val preference = Preference(context)
+        val socketService = SocketService(preference = preference)
+        val conf = mapOf(
+            "no_chat" to false,
+            "ignore_anonymous" to false,
+            // Not needed for now
+            // autotrack: {
+            //   pageviews: false,
+            //   buttons: false,
+            //   forms: false
+            // }
+        )
+        val user = UserModel(
+            id = uid,
+            identified = false
+        )
+
+        socketService.initSocket(
+            conf = conf,
+            user = user,
+        )
+        val composeView = ComposeView(context).apply {
+            setContent {
+                ChatView(
+                    userId = uid,
+                    socketService = socketService,
+//                    threadId = "68adda8bedfc54c3fc029283",
+//                    threadId = socketService.getOpenThreadId(),
+                    onDismiss = {
+                        (parent as ViewGroup).removeView(this)
+                        println("Closing Carousel")
+                    }
+                )
+            }
+        }
+
+        (context as Activity).addContentView(
+            composeView,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
+    }
 
     override fun showDialog(context: Context, isCarousel: Boolean) {
         val inAppPayload =

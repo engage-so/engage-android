@@ -17,4 +17,5 @@ object Endpoint {
     val merge: URL = URL("$USERS/merge")
     fun track(uid: String): URL = URL("$USERS/$uid/events")
     fun trackNotification(id: String): URL = URL("$MESSAGES/$id/track")
+
 }

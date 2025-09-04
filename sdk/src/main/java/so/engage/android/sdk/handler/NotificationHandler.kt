@@ -62,7 +62,7 @@ class NotificationHandler private constructor(): NotificationHandlerInterface {
         }
     }
 
-    override fun trackMessageOpened(context: Context, message: String?, messageId: String?) {
+    override suspend fun trackMessageOpened(context: Context, message: String?, messageId: String?) {
         val preference = Preference(context)
         val network = Network(preference)
 
@@ -85,7 +85,7 @@ class NotificationHandler private constructor(): NotificationHandlerInterface {
         }
     }
 
-    override fun trackMessageDelivered(context: Context, remoteMessage: RemoteMessage) : Boolean {
+    override suspend fun trackMessageDelivered(context: Context, remoteMessage: RemoteMessage) : Boolean {
         val preference = Preference(context)
         val network = Network(preference)
 

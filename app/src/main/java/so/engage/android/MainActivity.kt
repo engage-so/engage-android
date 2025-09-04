@@ -1,7 +1,6 @@
 package so.engage.android
 
 import android.Manifest
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -89,6 +88,11 @@ fun HomePage() {
                 Engage.instance.showDialog(context, isCarousel = true)
             }) {
                 Text(text = "Show Carousel")
+            }
+            Button(onClick = {
+                Engage.instance.openChat(context, uid = "beifbeiue")
+            }) {
+                Text(text = "Open Chat")
             }
         }
     }

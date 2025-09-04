@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 val Any.toJson: String
     get() {
@@ -29,10 +31,17 @@ val String.toRemoteMessage: RemoteMessage?
         }
     }
 
+val String.toFormattedDate: String
+    get() {
+        return ZonedDateTime
+            .parse(this, DateTimeFormatter.ISO_DATE_TIME)
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+    }
+
 val Context.version: String
     get() {
         val packageInfo = this.packageManager.getPackageInfo(this.packageName, 0)
-        return packageInfo.versionName
+        return packageInfo.versionName ?: ""
     }
 
 val Context.build: String

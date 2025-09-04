@@ -19,6 +19,7 @@ interface EngageInterface {
     fun track(event: String, value: Any? = null, date: Date? = null, uid: String? = null)
     fun onMessageOpened(handler:  (RemoteMessage) -> Unit)
     fun onMessageReceived(handler:  (RemoteMessage) -> Unit)
-    fun handleMessageReceived(context: Context, remoteMessage: RemoteMessage) : Boolean
+    suspend fun handleMessageReceived(context: Context, remoteMessage: RemoteMessage) : Boolean
     fun showDialog(context: Context, isCarousel: Boolean)
+    fun openChat(context: Context, uid: String)
 }

@@ -4,6 +4,9 @@ import android.content.Context
 import com.google.firebase.Firebase
 import com.google.firebase.messaging.RemoteMessage
 import com.google.firebase.messaging.messaging
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import so.engage.android.sdk.handler.DialogHandler
 import so.engage.android.sdk.handler.NotificationHandler
 import so.engage.android.sdk.network.Endpoint
@@ -76,7 +79,10 @@ class Engage private constructor() : EngageInterface {
         }
         data["meta"] = meta
 
-        network.put(Endpoint.identify(uid), data.toJson)
+        CoroutineScope(Dispatchers.IO).launch {
+            network.put(Endpoint.identify(uid), data.toJson)
+        }
+
         val hasUsageActivity = preference.getBoolean(Constants.HAS_USAGE_ACTIVITY)
         if (!hasUsageActivity) {
             preference.putBoolean(mapOf(Constants.HAS_USAGE_ACTIVITY to  true))
@@ -98,7 +104,9 @@ class Engage private constructor() : EngageInterface {
         data["app_build"] = build
         data["app_last_active"] = Date()
 
-        network.put(Endpoint.setDeviceToken(uid), data.toJson)
+        CoroutineScope(Dispatchers.IO).launch {
+            network.put(Endpoint.setDeviceToken(uid), data.toJson)
+        }
         val hasUsageActivity = preference.getBoolean(Constants.HAS_USAGE_ACTIVITY)
         if (!hasUsageActivity) {
             preference.putBoolean(mapOf(Constants.HAS_USAGE_ACTIVITY to  true))
@@ -108,7 +116,9 @@ class Engage private constructor() : EngageInterface {
     override fun logout(deviceToken: String?, uid: String?) {
         val uid = userId(uid)
         val token = deviceToken ?: preference.getString(Constants.DEVICE_TOKEN) ?: ""
-        network.delete(Endpoint.logout(uid, token))
+        CoroutineScope(Dispatchers.IO).launch {
+            network.delete(Endpoint.logout(uid, token))
+        }
     }
 
     override fun addToAccount(aid: String, role: String?, uid: String?) {
@@ -122,7 +132,9 @@ class Engage private constructor() : EngageInterface {
 
         val data: HashMap<String, Any> = HashMap()
         data["accounts"] = accounts
-        network.post(Endpoint.addToAccount(uid), data.toJson)
+        CoroutineScope(Dispatchers.IO).launch {
+            network.post(Endpoint.addToAccount(uid), data.toJson)
+        }
     }
 
     override fun addAttributes(properties: Map<String, Any>, uid: String?) {
@@ -132,7 +144,9 @@ class Engage private constructor() : EngageInterface {
 
     override fun removeFromAccount(aid: String, uid: String?) {
         val uid = userId(uid)
-        network.delete(Endpoint.removeFromAccount(uid, aid))
+        CoroutineScope(Dispatchers.IO).launch {
+            network.delete(Endpoint.removeFromAccount(uid, aid))
+        }
     }
 
     override fun changeAccountRole(aid: String, role: String, uid: String?) {
@@ -140,7 +154,9 @@ class Engage private constructor() : EngageInterface {
         val data: HashMap<String, Any> = HashMap()
         data["role"] = role
 
-        network.put(Endpoint.changeAccountRole(uid, aid), data.toJson)
+        CoroutineScope(Dispatchers.IO).launch {
+            network.put(Endpoint.changeAccountRole(uid, aid), data.toJson)
+        }
     }
 
     override fun convertToCustomer(uid: String?) {
@@ -148,7 +164,9 @@ class Engage private constructor() : EngageInterface {
         val data: HashMap<String, Any> = HashMap()
         data["type"] = "customer"
 
-        network.post(Endpoint.convertToCustomer(uid), data.toJson)
+        CoroutineScope(Dispatchers.IO).launch {
+            network.post(Endpoint.convertToCustomer(uid), data.toJson)
+        }
     }
 
     override fun convertToAccount(uid: String?) {
@@ -156,7 +174,9 @@ class Engage private constructor() : EngageInterface {
         val data: HashMap<String, Any> = HashMap()
         data["type"] = "account"
 
-        network.post(Endpoint.convertToAccount(uid), data.toJson)
+        CoroutineScope(Dispatchers.IO).launch {
+            network.post(Endpoint.convertToAccount(uid), data.toJson)
+        }
     }
 
     override fun merge(source: String, destination: String) {
@@ -164,7 +184,9 @@ class Engage private constructor() : EngageInterface {
         data["source"] = source
         data["destination"] = destination
 
-        network.post(Endpoint.merge, data.toJson)
+        CoroutineScope(Dispatchers.IO).launch {
+            network.post(Endpoint.merge, data.toJson)
+        }
     }
 
     override fun track(event: String, value: Any?, date: Date?, uid: String?) {
@@ -182,7 +204,9 @@ class Engage private constructor() : EngageInterface {
             data["timestamp"] = date
         }
 
-        network.post(Endpoint.track(uid), data.toJson)
+        CoroutineScope(Dispatchers.IO).launch {
+            network.post(Endpoint.track(uid), data.toJson)
+        }
         val hasUsageActivity = preference.getBoolean(Constants.HAS_USAGE_ACTIVITY)
         if (!hasUsageActivity) {
             preference.putBoolean(mapOf(Constants.HAS_USAGE_ACTIVITY to  true))
@@ -197,11 +221,15 @@ class Engage private constructor() : EngageInterface {
         NotificationHandler.instance.setOnMessageReceived(handler)
     }
 
-    override fun handleMessageReceived(context: Context, remoteMessage: RemoteMessage): Boolean {
+    override suspend fun handleMessageReceived(context: Context, remoteMessage: RemoteMessage): Boolean {
         return NotificationHandler.instance.trackMessageDelivered(context, remoteMessage)
     }
 
     override fun showDialog(context: Context, isCarousel: Boolean) {
         DialogHandler.instance.showDialog(context, isCarousel)
+    }
+
+    override fun openChat(context: Context, uid: String) {
+        DialogHandler.instance.openChat(context, uid)
     }
 }

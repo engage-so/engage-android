@@ -3,6 +3,9 @@ package so.engage.android.sdk.notification
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import so.engage.android.sdk.handler.NotificationHandler
 import so.engage.android.sdk.utils.Constants
 
@@ -24,6 +27,7 @@ class NotificationActivity : Activity() {
     }
 
     private fun handleIntent(data: Intent?) {
+        val context = this
         kotlin.runCatching {
             val extras = data?.extras
             // Ignore event if no data was received in extras
@@ -35,11 +39,13 @@ class NotificationActivity : Activity() {
             if (message == null && messageId == null) return
 
             println("Tracking Click Activity")
-            NotificationHandler.instance.trackMessageOpened(
-                context = this,
-                message = message,
-                messageId = messageId
-            )
+            CoroutineScope(Dispatchers.IO).launch {
+                NotificationHandler.instance.trackMessageOpened(
+                    context = context,
+                    message = message,
+                    messageId = messageId
+                )
+            }
         }.onFailure { ex ->
             println("Failed to process notification intent: ${ex.message}")
         }
