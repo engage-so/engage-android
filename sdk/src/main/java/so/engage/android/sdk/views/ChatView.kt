@@ -17,197 +17,66 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.*
 import so.engage.android.sdk.models.MessageModel
-import so.engage.android.sdk.models.UserModel
-import so.engage.android.sdk.network.SocketService
 import so.engage.android.sdk.utils.toFormattedDate
-import so.engage.android.sdk.utils.toJson
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.concurrent.ConcurrentHashMap
-import java.util.UUID
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatView(
-    socketService: SocketService,
-    userId: String,
-    onDismiss: () -> Unit
-) {
-    val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val messages = remember { mutableStateListOf<MessageModel>() }
-    var input by remember { mutableStateOf("") }
-    var agentTyping by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(true) }
-    val typingTimer = remember { ConcurrentHashMap<String, Job>() }
-    val agentsOnline = socketService.getOnlineAgents()
-    val threadId = socketService.openThreadId.value
+fun ChatView(viewModel: EngageViewModel) {
+    val input = remember { mutableStateOf("") }
 
-    // Load messages and set up socket listeners
-    DisposableEffect(threadId, userId) {
-        scope.launch {
-            messages.clear()
-            messages.addAll(socketService.loadMessages())
-            isLoading = false
-        }
-
-        val offMsg = socketService.onMessage { msg ->
-            println("NEW MESSAGE RECEIVED ${msg.toJson}")
-            if (msg.parentId == threadId && msg.uid == userId) {
-                messages.add(msg)
-                messages.sortBy { it.lastUpdated }
-            }
-        }
-
-        val offTyping = socketService.onTyping { isTyping, data ->
-            println("TYPING $data")
-            if ((data as? Map<*, *>)?.get("parent_id") == threadId) {
-                agentTyping = isTyping
-                if (isTyping) {
-                    scope.launch {
-                        delay(5.seconds)
-                        agentTyping = false
-                    }
-                }
-            }
-        }
-
-        // Cleanup socket listeners when composable is disposed
-        onDispose {
-            offMsg()
-            offTyping()
-        }
-    }
-
-    // Group messages by date
-    val sections = remember(messages.size) {
-        if (messages.isEmpty()) emptyList()
-        else {
-            val groups = messages.groupBy { msg ->
-                msg.lastUpdated.toFormattedDate
-            }
-            groups.entries.sortedBy { it.key }.map { (date, messages) ->
-                mapOf("title" to date, "data" to messages)
-            }
-        }
-    }
-
-    // Modal UI
-    ModalBottomSheet(
-        sheetState = sheetState,
-        onDismissRequest = {
-            scope.launch {
-                sheetState.hide()
-                onDismiss.invoke()
-            }
-        },
-        modifier = Modifier.fillMaxHeight(0.9f)
+    Column(
+        modifier = Modifier
+            .fillMaxHeight(0.9f)
+            .fillMaxWidth()
+            .background(Color(0xFFF8F9FA))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFF8F9FA))
-        ) {
-            // Offline message
-            if (agentsOnline < 1) {
-                Text(
-                    text = "We are currently offline. Send us a message and we will respond soon.",
-                    modifier = Modifier.padding(12.dp),
-                    fontSize = 14.sp,
-                    color = Color(0xFF374151)
-                )
-            }
-
-            // Message List
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(12.dp),
-                contentPadding = PaddingValues(bottom = 12.dp)
-            ) {
-                sections.forEach { section ->
-                    item {
-                        SectionHeader(title = section["title"] as String)
-                    }
-                    items(section["data"] as List<MessageModel>) { message ->
-                        MessageBubble(message = message, userId = userId)
-                    }
-                }
-            }
-
-            // Typing indicator
-            if (agentTyping) {
-                Text(
-                    text = "Typing...",
-                    modifier = Modifier.padding(start = 12.dp),
-                    fontSize = 14.sp,
-                    color = Color(0xFF777777)
-                )
-            }
-
-            // Input Area
-            InputArea(
-                input = input,
-                onInputChange = { text ->
-                    input = text
-                    if (threadId.isNotEmpty()) {
-                        if (typingTimer["typing"] == null) {
-                            socketService.emitTyping(threadId, true)
-                            typingTimer["typing"] = scope.launch {
-                                delay(4.seconds)
-                                socketService.emitTyping(threadId, false)
-                                typingTimer.remove("typing")
-                            }
-                        } else {
-                            typingTimer["typing"]?.cancel()
-                            typingTimer["typing"] = scope.launch {
-                                delay(4.seconds)
-                                socketService.emitTyping(threadId, false)
-                                typingTimer.remove("typing")
-                            }
-                        }
-                    }
-                },
-                onSend = {
-                    if (input.trim().isNotEmpty()) {
-                        val tempId = "temp-${UUID.randomUUID()}"
-                        val optimistic = MessageModel(
-                            id = tempId,
-                            messageId = "",
-                            body = input,
-                            parentId = threadId,
-                            uid = userId,
-                            user = "",
-                            from = UserModel(id = userId),
-                            cid = clientId,
-                            outbound = true,
-                            read = false,
-                            date = getCurrentTime(),
-                            lastUpdated = getCurrentTime(),
-                        )
-                        messages.add(optimistic)
-                        messages.sortBy { it.lastUpdated }
-                        input = ""
-                        scope.launch {
-                            try {
-                                socketService.sendMessage(optimistic)
-                            } catch (e: Exception) {
-                                println(e.toString())
-                                // Replace replaceAll with map for API 21 compatibility
-                                val updatedMessages = messages.map { msg ->
-                                    if (msg.id == tempId) msg.copy(status = "failed") else msg
-                                }
-                                messages.clear()
-                                messages.addAll(updatedMessages)
-                            }
-                        }
-                    }
-                }
+        // Offline message
+        if (viewModel.agentsOnline.intValue < 1) {
+            Text(
+                text = "We are currently offline. Send us a message and we will respond soon.",
+                modifier = Modifier.padding(12.dp),
+                fontSize = 14.sp,
+                color = Color(0xFF374151)
             )
         }
+
+        // Message List
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(12.dp),
+            contentPadding = PaddingValues(bottom = 12.dp)
+        ) {
+            viewModel.sections.forEach { section ->
+                item {
+                    SectionHeader(title = section["title"] as String)
+                }
+                items(section["data"] as List<*>) { message ->
+                    MessageBubble(message = message as MessageModel)
+                }
+            }
+        }
+
+        // Typing indicator
+        if (viewModel.agentTyping.value) {
+            Text(
+                text = "Typing...",
+                modifier = Modifier.padding(start = 12.dp),
+                fontSize = 14.sp,
+                color = Color(0xFF777777)
+            )
+        }
+
+        // Input Area
+        InputArea(
+            input = input.value,
+            onInputChange = { text ->
+                input.value = text
+                viewModel.handleTypingChange()
+            },
+            onSend = { viewModel.handleSend(input) }
+        )
     }
 
 }
@@ -233,7 +102,7 @@ fun SectionHeader(title: String) {
 }
 
 @Composable
-fun MessageBubble(message: MessageModel, userId: String) {
+fun MessageBubble(message: MessageModel) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -299,12 +168,4 @@ fun InputArea(input: String, onInputChange: (String) -> Unit, onSend: () -> Unit
             Text("Send", color = Color.White)
         }
     }
-}
-
-// Client ID for optimistic updates
-private val clientId = UUID.randomUUID().toString()
-
-fun getCurrentTime(): String {
-    return ZonedDateTime.now()
-        .format(DateTimeFormatter.ISO_INSTANT)
 }

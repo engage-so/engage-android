@@ -26,10 +26,10 @@ class Network(private val preference: Preference) : NetworkInterface {
         val client = OkHttpClient()
         val publicKey = preference.getString(Constants.PUBLIC_KEY) ?: ""
         val credential: String = Credentials.basic(publicKey, "")
-        println("CREDENTIAL $credential")
         val request: Request = builder
             .header("Authorization", credential)
             .build()
+        println("REQUEST URL: ${request.url}")
 
         val call = client.newCall(request)
         call.enqueue(object : Callback {
@@ -41,10 +41,10 @@ class Network(private val preference: Preference) : NetworkInterface {
             override fun onResponse(call: Call, response: Response) {
                 response.use {
                     if (response.isSuccessful) {
-                        val responseBody = response.body?.string()
+                        val responseBody = response.body.string()
                         println("ENGAGE: Response body: $responseBody")
                         try {
-                            if (typeToken != null && responseBody != null) {
+                            if (typeToken != null) {
                                 val gson = Gson()
                                 val data: T? = gson.fromJson(responseBody, typeToken.type)
                                 continuation.resume(data)
@@ -52,11 +52,11 @@ class Network(private val preference: Preference) : NetworkInterface {
                                 continuation.resume(null)
                             }
                         } catch (e: Exception) {
-                            println("ENGAGE: JSON parsing error: ${e.message}\n${request.url}\n${request.body}")
+                            println("ENGAGE: JSON parsing error: ${e.message}\n${request.body}")
                             continuation.resumeWithException(e)
                         }
                     } else {
-                        val errorBody = response.body?.string()
+                        val errorBody = response.body.string()
                         println("ENGAGE: Error body: $errorBody\n${request.url}\n${request.body}")
                         continuation.resumeWithException(Exception("Request failed with code ${response.code}: $errorBody"))
                     }

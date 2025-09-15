@@ -1,5 +1,6 @@
 package so.engage.android.sdk.network
 
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -34,7 +35,6 @@ class SocketService(
     private val onTypingHandlers = mutableListOf<(Boolean, Any?) -> Unit>()
     private var user = UserModel("")
     private var account = AccountModel()
-    private var agentsOnlineCount = 0
     private val activeMessageListeners = mutableListOf<(String) -> Unit>()
     private var activeMessage: String? = null
 
@@ -50,13 +50,14 @@ class SocketService(
     }
 
     val openThreadId = mutableStateOf("")
+    val onlineAgents = mutableIntStateOf(0)
 
-
-    fun getOnlineAgents(): Int = agentsOnlineCount
 
     fun getActiveMessage(): String? = activeMessage
 
     suspend fun loadMessages(threadId: String = openThreadId.value): List<MessageModel> {
+        if (threadId.isEmpty()) return emptyList()
+
         val messages = preference.loadMessages("chat_threads_$threadId")
         if (messages.isEmpty()) {
             println("No persisted messages")
@@ -181,7 +182,7 @@ class SocketService(
     }
 
     private fun onAgentsOnline(count: Int) {
-        agentsOnlineCount = count
+        onlineAgents.intValue = count
     }
 
     private fun onNewNotification(data: JSONObject) {
