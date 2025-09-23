@@ -1,18 +1,23 @@
 package so.engage.android.sdk.views
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -84,26 +89,50 @@ fun ChatView(viewModel: EngageViewModel) {
 @Composable
 fun SectionHeader(title: String) {
     Row(
-        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp, horizontal = 12.dp)
-            .background(Color(0xFFF3F4F6), RoundedCornerShape(6.dp))
+            .padding(vertical = 6.dp)
     ) {
-        Text(
-            text = title,
-            fontSize = 13.sp,
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF374151),
-            modifier = Modifier.padding(6.dp)
+        HorizontalDivider(
+            modifier = Modifier
+                .weight(1f)
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp)
+                .border(
+                    width = 1.dp,
+                    color = Color.Gray.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(18.dp)
+                )
+                .background(
+                    Color.White,
+                    RoundedCornerShape(100.dp)
+                )
+        ) {
+            Text(
+                text = title,
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp)
+            )
+        }
+        HorizontalDivider(
+            modifier = Modifier
+                .weight(1f)
         )
     }
 }
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun MessageBubble(message: MessageModel) {
-    Box(
+    val config = LocalConfiguration.current
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp)
@@ -112,60 +141,81 @@ fun MessageBubble(message: MessageModel) {
                     println(message.toString())
                 }
             }
-            .wrapContentWidth(if (message.outbound) Alignment.End else Alignment.Start)
+            .wrapContentWidth(if (message.outbound) Alignment.End else Alignment.Start),
+        horizontalAlignment = if (message.outbound) Alignment.End else Alignment.Start
+
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .widthIn(max = 300.dp)
+                .widthIn(max = (config.screenWidthDp * 0.8).dp)
+                .border(
+                    width = 1.dp,
+                    color = Color.Gray.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(18.dp)
+                )
                 .background(
-                    if (message.outbound) Color.Green else Color.Cyan,
-                    RoundedCornerShape(8.dp)
+                    if (message.outbound) Color(0xFFE8EAED) else Color.Transparent,
+                    RoundedCornerShape(18.dp)
                 )
                 .padding(10.dp)
+
+
         ) {
             HtmlTextView(html = message.body)
-            Text(
-                text = message.lastUpdated.toFormattedDate,
-                fontSize = 12.sp,
-                color = Color(0xFF777777),
-                modifier = Modifier.padding(top = 4.dp)
-            )
         }
+        Text(
+            text = message.lastUpdated.toFormattedDate,
+            fontSize = 10.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(top = 6.dp)
+        )
     }
+
 }
 
 @Composable
 fun InputArea(input: String, onInputChange: (String) -> Unit, onSend: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFF8F9FA))
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .border(1.dp, Color(0xFFE5E7EB)),
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        TextField(
-            value = input,
-            onValueChange = onInputChange,
-            placeholder = { Text("Type a message...", color = Color(0xFF9CA3AF)) },
+        HorizontalDivider()
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .background(Color.White, RoundedCornerShape(24.dp))
-                .padding(horizontal = 16.dp),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            )
-        )
-        IconButton(onClick = {}) { Text("😊") }
-        IconButton(onClick = {}) { Text("📎") }
-        Button(
-            onClick = onSend,
-            modifier = Modifier
-                .padding(start = 8.dp)
-                .background(Color(0xFF0B93F6), RoundedCornerShape(6.dp))
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Send", color = Color.White)
+            TextField(
+                value = input,
+                onValueChange = onInputChange,
+                placeholder = { Text("Send a message...", color = Color(0xFF9CA3AF)) },
+                modifier = Modifier
+                    .weight(1f),
+                colors = TextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                )
+            )
+            IconButton(onClick = {}) { Text("📎") }
+            ElevatedButton(
+                onClick = onSend,
+                colors = ButtonDefaults.elevatedButtonColors(
+                    containerColor = blue,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(12.dp),
+                modifier = Modifier
+                    .size(44.dp)
+
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.Send,
+                    contentDescription = "",
+                    tint = Color.White,
+                )
+            }
         }
     }
 }

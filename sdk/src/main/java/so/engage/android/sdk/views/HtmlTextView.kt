@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun HtmlTextView(
@@ -90,6 +91,7 @@ fun HtmlTextView(
     Text(
         text = annotatedString,
         modifier = modifier,
+        fontSize = 12.sp,
         style = TextStyle.Default // Customize text style if needed
     )
 }
