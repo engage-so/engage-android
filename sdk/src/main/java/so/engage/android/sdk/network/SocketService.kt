@@ -109,15 +109,12 @@ class SocketService {
                         }
                     }
                 }
+                onAnyIncoming { args -> println((args[0] as? JSONObject).toString()) }
                 connect()
             }
         } catch (e: Exception) {
             println("ENGAGE: Failed to load threads: ${e.message}")
         }
-    }
-
-    fun closeSocket() {
-        socket?.disconnect()
     }
 
     fun onAgentsOnline(handler: (Int) -> Unit): () -> Unit {

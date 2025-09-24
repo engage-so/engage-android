@@ -3,18 +3,19 @@ package so.engage.android.sdk.utils
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import androidx.core.graphics.toColorInt
 
 val Any.toJson: String
     get() {
@@ -26,7 +27,7 @@ val String.toRemoteMessage: RemoteMessage?
     get() {
         return try {
             Gson().fromJson(this, RemoteMessage::class.java)
-        } catch (exc: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -57,7 +58,7 @@ val Context.build: String
 
 @ColorInt
 internal fun String.toColorOrNull(): Int? = try {
-    Color.parseColor(this)
+    this.toColorInt()
 } catch (ex: IllegalArgumentException) {
     println("Invalid color string $this, ${ex.message}")
     null
@@ -117,4 +118,9 @@ internal fun ComposeColor.Companion.fromHex(hex: String): ComposeColor {
         )
         else -> Unspecified
     }
+}
+
+fun LazyListState.isScrolledToEnd(): Boolean {
+    val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
+    return lastVisibleItem == null || lastVisibleItem.index >= layoutInfo.totalItemsCount - 2
 }

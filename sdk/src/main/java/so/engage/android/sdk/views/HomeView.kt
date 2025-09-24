@@ -16,18 +16,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import so.engage.android.sdk.utils.toFormattedDate
 
 val blue = Color(0xFF3264F3)
 
 @Composable
 fun HomeView(navigator: NavController, viewModel: EngageViewModel) {
-
-
     Column(
         modifier = Modifier
             .fillMaxHeight(0.9f)
             .fillMaxWidth()
-            .background(Color(0xFFF8F9FA))
+            .background(MaterialTheme.colorScheme.surface)
     ) {
         // Header Section
         Column(
@@ -65,22 +64,22 @@ fun HomeView(navigator: NavController, viewModel: EngageViewModel) {
                 .padding(16.dp)
 
         ) {
-            Text(
-                text = "3 days ago",
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-            Text(
-                text = "What's next? Don't tell me this is how we work now? You ain't responding to me guy why na?",
-                fontSize = 14.sp,
-                color = Color.Black,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+            if (viewModel.activeThread.value != null) {
+                Text(
+                    text = viewModel.activeThread.value?.lastUpdated?.toFormattedDate ?: "",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+                HtmlTextView(
+                    html = viewModel.activeThread.value?.excerpt ?: "",
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
             Button(
                 onClick = { navigator.navigate("chat") },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 contentPadding = PaddingValues(12.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -93,7 +92,7 @@ fun HomeView(navigator: NavController, viewModel: EngageViewModel) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Continue Conversation",
+                        text = if (viewModel.activeThread.value != null) "Continue Conversation" else "Start a Conversation",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.W600,
                         color = Color.White

@@ -4,6 +4,7 @@ import android.text.Html
 import android.text.Spanned
 import android.text.style.URLSpan
 import android.text.style.StyleSpan
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.sp
 fun HtmlTextView(
     html: String,
     modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurface,
     isHtml: Boolean = html.contains("<[a-zA-Z][^>]*>".toRegex()) // Detect HTML tags
 ) {
     val uriHandler = LocalUriHandler.current
@@ -92,6 +94,7 @@ fun HtmlTextView(
         text = annotatedString,
         modifier = modifier,
         fontSize = 12.sp,
+        color = color,
         style = TextStyle.Default // Customize text style if needed
     )
 }

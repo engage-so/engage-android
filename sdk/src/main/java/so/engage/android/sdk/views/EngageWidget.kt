@@ -18,6 +18,7 @@ import so.engage.android.sdk.models.ThreadModel
 import so.engage.android.sdk.models.UserModel
 import so.engage.android.sdk.network.Network
 import so.engage.android.sdk.network.SocketService
+import so.engage.android.sdk.utils.EngageTheme
 import so.engage.android.sdk.utils.Preference
 import so.engage.android.sdk.utils.toFormattedDate
 import so.engage.android.sdk.utils.toJson
@@ -55,30 +56,31 @@ fun EngageWidget(
         }
     }
 
+    EngageTheme {
+        // Modal UI
+        ModalBottomSheet(
+            sheetState = sheetState,
+            dragHandle = {},
+            onDismissRequest = {
+                scope.launch {
+                    viewModel.dispose()
+                    sheetState.hide()
+                    onDismiss.invoke()
+                }
+            },
+        ) {
+            val navigator = rememberNavController()
+            NavHost(navController = navigator, startDestination = "index") {
+                composable("index") {
+                    HomeView(navigator = navigator, viewModel = viewModel)
+                }
+                composable("chat") {
+                    ChatView(navigator = navigator, viewModel = viewModel)
+                }
+            }
 
-    // Modal UI
-    ModalBottomSheet(
-        sheetState = sheetState,
-        dragHandle = {},
-        onDismissRequest = {
-            scope.launch {
-                sheetState.hide()
-                onDismiss.invoke()
-            }
-        },
-    ) {
-        val navigator = rememberNavController()
-        NavHost(navController = navigator, startDestination = "index") {
-            composable("index") {
-                HomeView(navigator = navigator, viewModel = viewModel)
-            }
-            composable("chat") {
-                ChatView(viewModel = viewModel)
-            }
         }
-
     }
-
 }
 
 // Client ID for optimistic updates
@@ -113,7 +115,7 @@ class EngageViewModel(val preference: Preference, val userId: String) : ViewMode
     val typingTimer = ConcurrentHashMap<String, Job>()
     val agentsOnline = mutableIntStateOf(0)
     val threadId = mutableStateOf("")
-    val activeMessage = mutableStateOf<String?>(null)
+    val activeThread = mutableStateOf<ThreadModel?>(null)
     val cleanUp = mutableStateListOf<() -> Unit>()
 
 
@@ -147,6 +149,7 @@ class EngageViewModel(val preference: Preference, val userId: String) : ViewMode
     }
 
     fun updateSections() {
+        sections.clear()
         sections.addAll(
             elements = if (messages.isEmpty()) emptyList()
             else {
@@ -158,15 +161,22 @@ class EngageViewModel(val preference: Preference, val userId: String) : ViewMode
                 }
             }
         )
+    }
 
+    fun updateMessages(clear: Boolean = true, newMessages: List<MessageModel>) {
+        if (clear) {
+            messages.clear()
+        }
+        messages.addAll(newMessages)
+        messages.sortBy { it.lastUpdated }
+        updateSections()
     }
 
     fun setup() {
         println("SETUP RUNNING")
         CoroutineScope(Dispatchers.IO).launch {
             messages.clear()
-            messages.addAll(loadMessages())
-            updateSections()
+            loadMessages()
         }
 
 
@@ -183,10 +193,14 @@ class EngageViewModel(val preference: Preference, val userId: String) : ViewMode
                     println("DATA TO STRING $data")
                     val msg = Gson().fromJson(data.toString(), MessageModel::class.java)
 
-                    messages.add(msg)
-                    messages.sortBy { it.lastUpdated }
-                    updateSections()
-                    setActiveMessage(msg.body)
+                    updateMessages(clear = false, newMessages = listOf(msg))
+
+                    activeThread.value?.let { thread ->
+                        setActiveThread(
+                            thread.copy(excerpt = msg.body, lastUpdated = msg.lastUpdated)
+                        )
+                    }
+
                     persistMessage(msg.parentId, listOf(msg))
                 }
 
@@ -222,9 +236,8 @@ class EngageViewModel(val preference: Preference, val userId: String) : ViewMode
                 date = getCurrentTime(),
                 lastUpdated = getCurrentTime(),
             )
-            messages.add(optimistic)
-            messages.sortBy { it.lastUpdated }
-            updateSections()
+            updateMessages(clear = false, newMessages = listOf(optimistic))
+
             input.value = ""
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -235,10 +248,7 @@ class EngageViewModel(val preference: Preference, val userId: String) : ViewMode
                     val updatedMessages = messages.map { msg ->
                         if (msg.id == tempId) msg.copy(status = "failed") else msg
                     }
-                    messages.clear()
-                    messages.addAll(updatedMessages)
-                    messages.sortBy { it.lastUpdated }
-                    updateSections()
+                    updateMessages(newMessages = updatedMessages)
                 }
             }
         }
@@ -264,33 +274,28 @@ class EngageViewModel(val preference: Preference, val userId: String) : ViewMode
         }
     }
 
-    suspend fun loadMessages(): List<MessageModel> {
-        if (threadId.value.isEmpty()) return emptyList()
+    suspend fun loadMessages() {
+        if (threadId.value.isEmpty()) return
 
-        val messages = preference.loadMessages("chat_threads_${threadId.value}")
-        if (messages.isEmpty()) {
-            println("No persisted messages")
-            val url = URL("https://api.engage.so/v1/messages/chat/${threadId.value}?uid=${userId}")
-            val responseType = object : TypeToken<Map<String, Any>>() {}
-            return try {
-                val data: Map<String, Any> = network.get(url, responseType)
-                val chats: List<MessageModel> = data["messages"]?.let {
-                    Gson().fromJson(it.toJson, object : TypeToken<List<MessageModel>>() {}.type)
-                } ?: emptyList()
-                if (chats.isNotEmpty()) {
-                    preference.clear("chat_threads_${threadId.value}")
-                    persistMessage(threadId.value, chats)
-                } else {
-                    emptyList()
-                }
-            } catch (e: Exception) {
-                println("ENGAGE: Failed to load thread: ${e.message}")
-                emptyList()
+        val cached = preference.loadMessages("chat_threads_${threadId.value}")
+        updateMessages(newMessages = cached)
+
+        val url = URL("https://api.engage.so/v1/messages/chat/${threadId.value}?uid=${userId}")
+        val responseType = object : TypeToken<Map<String, Any>>() {}
+        try {
+            val data: Map<String, Any> = network.get(url, responseType)
+            val chats: List<MessageModel> = data["messages"]?.let {
+                Gson().fromJson(it.toJson, object : TypeToken<List<MessageModel>>() {}.type)
+            } ?: emptyList()
+            if (chats.isNotEmpty()) {
+                preference.clear("chat_threads_${threadId.value}")
+                persistMessage(threadId.value, chats)
             }
-        } else {
-            println("Persisted messages found")
+            updateMessages(newMessages = chats)
+        } catch (e: Exception) {
+            println("ENGAGE: Failed to load thread: ${e.message}")
         }
-        return messages
+
     }
 
     suspend fun loadRecentThreads() {
@@ -303,7 +308,7 @@ class EngageViewModel(val preference: Preference, val userId: String) : ViewMode
                 dataList.forEach { thread ->
                     if (thread.status == "open") {
                         threadId.value = thread.id
-                        setActiveMessage(thread.excerpt)
+                        setActiveThread(thread)
                     }
                 }
                 preference.clear("chat_threads")
@@ -345,8 +350,8 @@ class EngageViewModel(val preference: Preference, val userId: String) : ViewMode
         return allMessages
     }
 
-    private fun setActiveMessage(msg: String) {
-        activeMessage.value = msg
+    private fun setActiveThread(thread: ThreadModel?) {
+        activeThread.value = thread
     }
 
     suspend fun sendMessage(message: MessageModel) {
@@ -365,7 +370,7 @@ class EngageViewModel(val preference: Preference, val userId: String) : ViewMode
 
     fun dispose() {
         cleanUp.forEach { it() }
-        socketService.closeSocket()
+//        socketService.closeSocket()
         preference.clear("user")
         preference.clear("chat_threads")
     }
